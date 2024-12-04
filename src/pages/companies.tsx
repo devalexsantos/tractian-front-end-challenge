@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import { getCompanies } from '../services/api';
 import { useQuery } from '@tanstack/react-query';
 
@@ -16,7 +17,9 @@ export function Companies() {
       <h1>Companies</h1>
       <ul>
         {companies?.map((company: any) => (
-          <li key={company.id}>{company.name}</li>
+          <Link key={company.id} to={`/company/${company.id}`}>
+            <li>{company.name}</li>
+          </Link>
         ))}
       </ul>
     </div>

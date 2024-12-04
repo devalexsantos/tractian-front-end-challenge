@@ -19,4 +19,7 @@ export interface Asset {
   children: Asset[];
 }
 
-
+export interface Company {
+  id: string;
+  name: string;
+}

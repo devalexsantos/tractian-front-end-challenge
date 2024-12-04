@@ -1,12 +1,16 @@
 import { useQuery } from "@tanstack/react-query";
-import React, { useState } from "react";
+import { useContext, useState } from "react";
 import { useParams } from "react-router-dom";
 import { getAssets, getLocations } from "../services/api";
 import { AssetTree } from "../components/AssetTree";
 import { Asset } from "../types";
 import { Location } from "../types";
+import { combineCompanyData } from "../utils/combine-company-data";
+import { CompanyContext } from "../contexts/CompanyContext";
 
 export function Company() {
+  const { currentCompany } = useContext(CompanyContext);
+
   const { id } = useParams();
 
   const [filters, setFilters] = useState({
@@ -26,71 +30,19 @@ export function Company() {
   });
 
 
-  const combinedData = React.useMemo(() => {
-    const locationMap: { [key: string]: Location } = {};
-
-    // Crreate a Locations/Sub-Locations
-    locations?.forEach((location) => {
-      locationMap[location.id] = { ...location, type: 'location', children: [] };
-      if (location.parentId) {
-        const parent = locationMap[location.parentId];
-        if (parent) {
-          parent.children.push(locationMap[location.id]);
-        }
-      }
-    });
-
-    const assetMap: { [key: string]: any } = {};
-
-    // Process Assets and Components
-    assets?.forEach((asset) => {
-      const isComponent = asset.sensorType !== null;
-      const isSubAsset = asset.parentId !== null;
-
-      if (isComponent) {
-        // Components associated a Assets/Sub-Assets or Locations
-        const parent =
-          asset.parentId ? assetMap[asset.parentId] : locationMap[asset.locationId as string];
-        if (parent) {
-          parent.children.push({ ...asset, type: 'component', children: [] });
-        } else {
-          // Components not associated
-          assetMap[asset.id] = { ...asset, type: 'component', children: [] };
-        }
-      } else if (isSubAsset) {
-        // Sub-Assets associeteds with Assets
-        assetMap[asset.id] = { ...asset, type: 'asset', children: [] };
-        const parent = assetMap[asset.parentId as string];
-        if (parent) {
-          parent.children.push(assetMap[asset.id]);
-        }
-      } else if (asset.locationId) {
-        // Assets associated with locations
-        assetMap[asset.id] = { ...asset, type: 'asset', children: [] };
-        const location = locationMap[asset.locationId];
-        if (location) {
-          location.children.push(assetMap[asset.id]);
-        }
-      } else {
-        // Assets not associateds
-        assetMap[asset.id] = { ...asset, type: 'asset', children: [] };
-      }
-    });
-
-    // Combine Locations and Assets not associateds on root
-    return [
-      ...Object.values(locationMap).filter((location) => !location.parentId),
-      ...Object.values(assetMap).filter((asset) => !asset.locationId && !asset.parentId),
-    ];
-  }, [locations, assets]);
-
-
-
+  const data = combineCompanyData({ locations, assets });
 
   return (
-    <div>
+    <div className="flex flex-col gap-3 flex-1 p-4 rounded border border-[#D8DFE6] m-2">
+      <header className="flex justify-between">
+        <div className="flex items-center gap-2">
+          <h1>Ativos</h1>
+          <span>/</span>
+          <h2>{currentCompany?.name}</h2>
+        </div>
+      </header>
       <h1>Asset Tree View</h1>
-      <div>
+      <div className="h-full">
         <input
           type="text"
           placeholder="Search..."
@@ -113,8 +65,8 @@ export function Company() {
           />
           Critical Status Only
         </label>
+        <AssetTree data={data} filters={filters} />
       </div>
-      <AssetTree data={combinedData} filters={filters} />
     </div>
   );
 }

@@ -21,7 +21,7 @@ export function CompanyProvider({
 ) {
   const [currentCompany, setCurrentCompany] = useState<Company | null>(null);
 
-  const { id } = useParams();
+  const { companyId } = useParams();
 
   const { data: companies, isLoading } = useQuery({
     queryKey: ['companies'],
@@ -34,12 +34,12 @@ export function CompanyProvider({
 
   useEffect(() => {
     if (companies) {
-      const company = companies.find((company: Company) => company.id === id);
+      const company = companies.find((company: Company) => company.id === companyId);
       if (company) {
         setCurrentCompany(company);
       }
     }
-  }, [companies, id]);
+  }, [companies, companyId]);
 
 
 

@@ -11,39 +11,60 @@ interface AssetTreeProps {
 }
 
 export function AssetTree({ data, filters }: AssetTreeProps) {
-  const filterTree = (node: Asset): boolean => {
+  const filterTreeWithHierarchy = (node: any): any => {
+
     // Filter by text
     if (filters.searchText) {
       const matches = node.name.toLowerCase().includes(filters.searchText.toLowerCase());
-      const hasMatchingChild = node.children?.some(filterTree);
-      return matches || hasMatchingChild;
+      const filteredChildren = node.children
+        ?.map(filterTreeWithHierarchy)
+        .filter(Boolean); // Filter childrens
+
+      if (matches || (filteredChildren && filteredChildren.length > 0)) {
+        return { ...node, children: filteredChildren || [] };
+      }
+      return null;
     }
 
-    // Sensor energy filter
+    // Energy sensors filter
     if (filters.energySensorsOnly) {
       const isEnergySensor = node.sensorType === 'energy';
-      const hasEnergyChild = node.children?.some(filterTree);
-      return isEnergySensor || hasEnergyChild;
+      const filteredChildren = node.children
+        ?.map(filterTreeWithHierarchy)
+        .filter(Boolean); // Filter childrens
+
+      if (isEnergySensor || (filteredChildren && filteredChildren.length > 0)) {
+        return { ...node, children: filteredChildren || [] };
+      }
+      return null;
     }
 
-    // Critical Status filter
+    // Critical status filter
     if (filters.criticalStatusOnly) {
       const isCritical = node.status === 'critical';
-      const hasCriticalChild = node.children?.some(filterTree);
-      return isCritical || hasCriticalChild;
+      const filteredChildren = node.children
+        ?.map(filterTreeWithHierarchy)
+        .filter(Boolean); // Filter childrens
+
+      if (isCritical || (filteredChildren && filteredChildren.length > 0)) {
+        return { ...node, children: filteredChildren || [] };
+      }
+      return null;
     }
 
-    return true; // No filters applied 
+    return { ...node, children: node.children?.map(filterTreeWithHierarchy).filter(Boolean) };
   };
 
-  const filteredData = data.filter(filterTree);
+  const filteredData = data
+    .map(filterTreeWithHierarchy)
+    .filter(Boolean);
 
   return (
-    <ul>
+    <div className="flex flex-col gap-1 py-2 px-1">
       {filteredData.map((node) => (
         <TreeNode key={node.id} node={node} />
       ))}
-    </ul>
+    </div>
   );
 };
 

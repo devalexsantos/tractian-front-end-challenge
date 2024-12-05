@@ -10,6 +10,7 @@ export default {
         'primary': "#17192D",
         'blue-500': "#2188FF",
         'blue-900': "#023B78",
+        'gray-600': "#77818C"
       },
       borderRadius: {
         'xs': '2px'

@@ -1,17 +1,15 @@
 import logo from '../../assets/LOGO-TRACTIAN.svg';
 import goldIcon from '../../assets/icons/gold.svg';
-import { useQuery } from '@tanstack/react-query';
-import { getCompanies } from '../../services/api';
 import { Company } from '../../types';
 import { Link, useLocation } from 'react-router-dom';
 import { CompanyButton } from './CompanyButton';
+import { useContext } from 'react';
+import { CompanyContext } from '../../contexts/CompanyContext';
 
 
 export function HeaderLayout() {
-  const { data: companies, isLoading } = useQuery({
-    queryKey: ['companies'],
-    queryFn: getCompanies,
-  })
+  const { companies, isLoading } = useContext(CompanyContext);
+
 
   const location = useLocation();
 

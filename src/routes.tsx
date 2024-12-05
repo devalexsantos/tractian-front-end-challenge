@@ -13,7 +13,7 @@ export const router = createBrowserRouter([
         element: <Companies />
       },
       {
-        path: "/company/:id",
+        path: "/company/:companyId",
         element: <Company />
       }
     ]

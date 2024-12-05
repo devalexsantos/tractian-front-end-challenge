@@ -1,69 +1,73 @@
 import { useMemo } from "react";
 import { Asset, Location } from "../types";
 
-type combineCompanyDataProps = {
+type CombineCompanyDataProps = {
   locations?: Location[];
   assets?: Asset[];
-}
+};
 
-export function combineCompanyData({ locations, assets }: combineCompanyDataProps) {
-
+export function combineCompanyData({ locations, assets }: CombineCompanyDataProps) {
   const combinedData = useMemo(() => {
-    const locationMap: { [key: string]: Location } = {};
+    const locationMap = new Map<string, Location & { type: string; children: any[] }>();
+    const assetMap = new Map<string, any>();
 
-    // Crreate a Locations/Sub-Locations
+    // Create a Locations/Sub-Locations
     locations?.forEach((location) => {
-      locationMap[location.id] = { ...location, type: 'location', children: [] };
+      const currentLocation = { ...location, type: "location", children: [] };
+      locationMap.set(location.id, currentLocation as Location);
+
       if (location.parentId) {
-        const parent = locationMap[location.parentId];
+        const parent = locationMap.get(location.parentId);
         if (parent) {
-          parent.children.push(locationMap[location.id]);
+          parent.children.push(currentLocation);
         }
       }
     });
-
-    const assetMap: { [key: string]: any } = {};
 
     // Process Assets and Components
     assets?.forEach((asset) => {
       const isComponent = asset.sensorType !== null;
       const isSubAsset = asset.parentId !== null;
 
+      const currentAsset = { ...asset, type: isComponent ? "component" : "asset", children: [] };
+      assetMap.set(asset.id, currentAsset);
+
+      // If it's a component
       if (isComponent) {
-        // Components associated a Assets/Sub-Assets or Locations
         const parent =
-          asset.parentId ? assetMap[asset.parentId] : locationMap[asset.locationId as string];
+          asset.parentId ? assetMap.get(asset.parentId) : locationMap.get(asset.locationId as string);
         if (parent) {
-          parent.children.push({ ...asset, type: 'component', children: [] });
-        } else {
-          // Components not associated
-          assetMap[asset.id] = { ...asset, type: 'component', children: [] };
+          parent.children.push(currentAsset);
         }
-      } else if (isSubAsset) {
-        // Sub-Assets associeteds with Assets
-        assetMap[asset.id] = { ...asset, type: 'asset', children: [] };
-        const parent = assetMap[asset.parentId as string];
+        return;
+      }
+
+      // If it's a sub-asset
+      if (isSubAsset) {
+        const parent = assetMap.get(asset.parentId as string);
         if (parent) {
-          parent.children.push(assetMap[asset.id]);
+          parent.children.push(currentAsset);
         }
-      } else if (asset.locationId) {
-        // Assets associated with locations
-        assetMap[asset.id] = { ...asset, type: 'asset', children: [] };
-        const location = locationMap[asset.locationId];
+        return;
+      }
+
+      // If it's associated with a location
+      if (asset.locationId) {
+        const location = locationMap.get(asset.locationId);
         if (location) {
-          location.children.push(assetMap[asset.id]);
+          location.children.push(currentAsset);
         }
-      } else {
-        // Assets not associateds
-        assetMap[asset.id] = { ...asset, type: 'asset', children: [] };
+        return;
       }
     });
 
-    // Combine Locations and Assets not associateds on root
-    return [
-      ...Object.values(locationMap).filter((location) => !location.parentId),
-      ...Object.values(assetMap).filter((asset) => !asset.locationId && !asset.parentId),
-    ];
+    // Combine Locations and Assets not associated on root
+    const rootLocations = Array.from(locationMap.values()).filter((location) => !location.parentId);
+    const unassociatedAssets = Array.from(assetMap.values()).filter(
+      (asset) => !asset.locationId && !asset.parentId
+    );
+
+    return [...rootLocations, ...unassociatedAssets];
   }, [locations, assets]);
 
   return combinedData;

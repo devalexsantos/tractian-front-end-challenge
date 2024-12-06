@@ -1,5 +1,8 @@
 # React + TypeScript + Vite
 
+👉 [Clique aqui para assistir ao vídeo no YouTube](https://youtu.be/8TGvZAs7RUE) </br></br>
+🌐 [Clique aqui para ver o projeto publicado](https://tractian-front-end-challenge-mu.vercel.app/)
+
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
 Currently, two official plugins are available:
